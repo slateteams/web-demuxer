@@ -30,10 +30,17 @@ export class WebDemuxer {
   private ffmpegWorkerLoadStatus: Promise<void>;
   private msgId: number;
 
-  public file?: File;
+  public file?: File | string;
+  private fileFetchStatus: Promise<void>;
+  private fileFetchStatusResolve!: () => void;
+  private fileFetchStatusReject!: (errMsg: string) => void;
 
   constructor(options: WebDemuxerOptions) {
     this.ffmpegWorker = new FFmpegWorker();
+    this.fileFetchStatus = new Promise((resolve, reject) => {
+      this.fileFetchStatusResolve = resolve;
+      this.fileFetchStatusReject = reject;
+    });
     this.ffmpegWorkerLoadStatus = new Promise((resolve, reject) => {
       this.ffmpegWorker.addEventListener("message", (e) => {
         const { type, errMsg } = e.data;
@@ -50,6 +57,14 @@ export class WebDemuxer {
 
         if (type === FFMpegWorkerMessageType.LoadWASM && errMsg) {
           reject(errMsg);
+        }
+
+        if (type === FFMpegWorkerMessageType.FileFetched) {
+          this.fileFetchStatusResolve();
+        }
+
+        if (type === FFMpegWorkerMessageType.FetchFile && errMsg) {
+          this.fileFetchStatusReject(errMsg);
         }
       });
     });
@@ -98,10 +113,16 @@ export class WebDemuxer {
    * @param file file to load
    * @returns load status
    */
-  public async load(file: File) {
+  public async load(file: File | string) {
     await this.ffmpegWorkerLoadStatus;
 
     this.file = file;
+    if (typeof file === "string") {
+      this.post(FFMpegWorkerMessageType.FetchFile, {
+        url: file,
+      });
+      await this.fileFetchStatus;
+    }
   }
 
   /**

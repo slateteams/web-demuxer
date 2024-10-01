@@ -14,9 +14,12 @@ export enum FFMpegWorkerMessageType {
   ReadNextAVPacket = "ReadNextAVPacket",
   StopReadAVPacket = "StopReadAVPacket",
   SetAVLogLevel = "SetAVLogLevel",
+  FetchFile = "FetchFile",
+  FileFetched = "FileFetched",
 }
 
 export type FFMpegWorkerMessageData =
+  | FetchFileMessageData
   | GetAVPacketMessageData
   | GetAVPacketsMessageData
   | GetAVStreamMessageData
@@ -24,20 +27,20 @@ export type FFMpegWorkerMessageData =
   | ReadAVPacketMessageData
   | LoadWASMMessageData
   | SetAVLogLevelMessageData
-  | GetMediaInfoMessageData;
+  | GetMediaInfoMessageData
 
 export interface GetAVStreamMessageData {
-  file: File;
+  file: File | string;
   streamType: AVMediaType;
   streamIndex: number;
 }
 
 export interface GetAVStreamsMessageData {
-  file: File;
+  file: File | string;
 }
 
 export interface GetAVPacketMessageData {
-  file: File;
+  file: File | string;
   time: number;
   streamType: AVMediaType;
   streamIndex: number;
@@ -45,13 +48,13 @@ export interface GetAVPacketMessageData {
 }
 
 export interface GetAVPacketsMessageData {
-  file: File;
+  file: File | string;
   time: number;
   seekFlag: AVSeekFlag;
 }
 
 export interface ReadAVPacketMessageData {
-  file: File;
+  file: File | string;
   start: number;
   end: number;
   streamType: AVMediaType;
@@ -64,7 +67,7 @@ export interface LoadWASMMessageData {
 }
 
 export interface GetMediaInfoMessageData {
-  file: File;
+  file: File | string;
 }
 
 export interface SetAVLogLevelMessageData {
@@ -75,4 +78,8 @@ export interface FFMpegWorkerMessage {
   type: FFMpegWorkerMessageType;
   data: FFMpegWorkerMessageData;
   msgId: number;
+}
+
+export interface FetchFileMessageData {
+  url: string;
 }

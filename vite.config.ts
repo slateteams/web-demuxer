@@ -4,13 +4,14 @@ import dts from "vite-plugin-dts";
 import babel from "@rollup/plugin-babel";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 
-export default defineConfig(() => ({
+export default defineConfig(({mode}) => ({
   build: {
     lib: {
       entry: resolve(__dirname, "src/index.ts"),
       name: "web-demuxer",
       fileName: "web-demuxer",
     },
+    minify: mode === 'development',
     rollupOptions: {
       plugins: [
         babel({
@@ -27,6 +28,7 @@ export default defineConfig(() => ({
         }),
       ],
     },
+    sourcemap: mode === 'development',
   },
   plugins: [
     dts({ rollupTypes: true }),

@@ -23,6 +23,7 @@
             <ul>
               <li><a href="#example-seek">Seek Video Frame</a></li>
               <li><a href="#example-play">Play Video</a></li>
+              <li><a href="#example-fetch-url">Fetch URL</a></li>
               <li><a href="#example-get-media-info">Get Media Info</a></li>
               <li><a href="#example-get-all-video-packets">Get All Video Packets</a></li>
             </ul>
@@ -87,6 +88,18 @@
               <button id="example-play-btn">Play</button>
             </fieldset>
             <canvas id="example-play-canvas" width="800px" height="450px"></canvas>
+          </card>
+        </section>
+        <section id="example-fetch-url">
+          <hgroup>
+            <h3>Fetch URL</h3>
+            <p>Enter the URL you want to fetch</p>
+          </hgroup>
+          <card>
+            <fieldset role="group">
+              <input type="url" id="example-fetch-url-input" placeholder="Enter the URL">
+              <button id="example-fetch-url-btn">Fetch</button>
+            </fieldset>
           </card>
         </section>
         <section id="example-get-media-info">
@@ -222,11 +235,20 @@
         console.log('all video packets:', await getAllPackets(file));
       });
 
+      document.getElementById('example-fetch-url-btn').addEventListener('click', async () => {
+        const url = document.getElementById('example-fetch-url-input').value;
+        await demuxer.load(url);
+        console.log('file loaded');
+        const mediaInfo = await demuxer.getMediaInfo();
+        console.log('media info: ', mediaInfo);
+      });
+
       document.getElementById('example-get-media-info-btn').addEventListener('click', async () => {
         const file = document.getElementById('example-get-media-info-file').files[0];
         await demuxer.load(file);
         const mediaInfo = await demuxer.getMediaInfo();
         console.log('media info: ', mediaInfo);
+        demuxer.destroy();
       });
 
       function wait(time) {
