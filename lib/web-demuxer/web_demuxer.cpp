@@ -282,6 +282,7 @@ std::string extract_stream(std::string filename, int type, int wanted_stream_nb)
     AVStream *in_stream = i_fmt_ctx->streams[stream_index];
     const AVCodec *codec = avcodec_find_encoder(in_stream->codecpar->codec_id);
     AVStream *out_stream = avformat_new_stream(o_fmt_ctx, codec);
+
     if (!out_stream)
     {
         av_log(NULL, AV_LOG_ERROR, "Cannot allocate output stream\n");
@@ -333,7 +334,9 @@ std::string extract_stream(std::string filename, int type, int wanted_stream_nb)
     {
         if (packet.stream_index == stream_index)
         {
+            
             packet.stream_index = 0;
+            av_packet_rescale_ts(&packet, in_stream->time_base, out_stream->time_base);
             ret = av_interleaved_write_frame(o_fmt_ctx, &packet);
             printf("av_interleaved_write_frame done\n %d \n", ret);
             if (ret < 0)

@@ -97,7 +97,6 @@
           <card>
             <fieldset role="group">
               <input type="file" id="example-extract-stream-file">
-              <input type="number" id="example-extract-stream-stream-index" placeholder="Enter stream index">
               <button id="example-extract-stream-btn">Extract</button>
             </fieldset>
           </card>
@@ -208,7 +207,7 @@
         });
       });
 
-      function saveStreamToFile(stream) {
+      function saveStreamToFile(stream, name) {
         const blob = new Blob([stream], { type: 'video/mp4' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -221,10 +220,9 @@
         const file = document.getElementById('example-extract-stream-file').files[0];
         await demuxer.load(file);
         const audioStream = await demuxer.extractAudioStream();
-        saveStreamToFile(audioStream);
+        saveStreamToFile(audioStream, 'audio_' + file.name);
         const videoStream = await demuxer.extractVideoStream();
-        saveStreamToFile(videoStream);
-        console.log('stream: ', stream);
+        saveStreamToFile(videoStream, 'video_' + file.name);
       });
 
       document.getElementById('example-get-all-video-packets-btn').addEventListener('click', async () => {
