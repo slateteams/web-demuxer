@@ -303,6 +303,26 @@ export class WebDemuxer {
   }
 
   /**
+   * Extract stream
+   */
+  public extractStream(type: AVMediaType = AVMediaType.AVMEDIA_TYPE_VIDEO, streamIndex: number = -1) {
+    console.log('extractStream', streamIndex);
+    return this.getFromWorker(FFMpegWorkerMessageType.ExtractStream, {
+      file: this.file!,
+      type,
+      streamIndex,
+    });
+  }
+
+  public extractVideoStream(streamIndex?: number) {
+    return this.extractStream(AVMediaType.AVMEDIA_TYPE_VIDEO, streamIndex);
+  }
+
+  public extractAudioStream(streamIndex?: number) {
+    return this.extractStream(AVMediaType.AVMEDIA_TYPE_AUDIO, streamIndex);
+  }
+
+  /**
    * Seek video packet at a time point
    * @param time seek time in seconds
    * @param seekFlag The seek flag

@@ -89,6 +89,19 @@
             <canvas id="example-play-canvas" width="800px" height="450px"></canvas>
           </card>
         </section>
+        <section id="example-extract-stream">
+          <hgroup>
+            <h3>Extract Stream</h3>
+            <p>Select a video file and extract stream, open devtools to see console output</p>
+          </hgroup>
+          <card>
+            <fieldset role="group">
+              <input type="file" id="example-extract-stream-file">
+              <input type="number" id="example-extract-stream-stream-index" placeholder="Enter stream index">
+              <button id="example-extract-stream-btn">Extract</button>
+            </fieldset>
+          </card>
+        </section>
         <section id="example-get-media-info">
           <hgroup>
             <h3>Get Media Info</h3>
@@ -193,6 +206,25 @@
 
           return reader.read().then(processPacket)
         });
+      });
+
+      function saveStreamToFile(stream) {
+        const blob = new Blob([stream], { type: 'video/mp4' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'stream.mp4';
+        a.click();
+      }
+
+      document.getElementById('example-extract-stream-btn').addEventListener('click', async () => {
+        const file = document.getElementById('example-extract-stream-file').files[0];
+        await demuxer.load(file);
+        const audioStream = await demuxer.extractAudioStream();
+        saveStreamToFile(audioStream);
+        const videoStream = await demuxer.extractVideoStream();
+        saveStreamToFile(videoStream);
+        console.log('stream: ', stream);
       });
 
       document.getElementById('example-get-all-video-packets-btn').addEventListener('click', async () => {

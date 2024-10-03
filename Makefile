@@ -14,7 +14,8 @@ MINI_DEMUX_ARGS = \
 
 DEMUX_ARGS = \
 	--enable-decoder=h264,hevc,vp9,vp8 \
-	--enable-demuxer=mov,mp4,m4a,3gp,3g2,mj2,avi,flv,matroska,webm,m4v,mpegi,asf
+	--enable-demuxer=mov,mp4,m4a,3gp,3g2,mj2,avi,flv,matroska,webm,m4v,mpegi,asf,mp3,aac,wav \
+	--enable-muxer=mp4,mov,m4a,3gp,3g2,mj2,avi,flv,matroska,webm,m4v,mpegi,asf,mp3,aac,wav
 
 WEB_DEMUXER_ARGS = \
 	emcc ./lib/web-demuxer/*.c ./lib/web-demuxer/*.cpp \
@@ -30,7 +31,8 @@ WEB_DEMUXER_ARGS = \
 		-s INVOKE_RUN=0 \
 		-s ENVIRONMENT=worker \
 		-s ASYNCIFY \
-		-s ALLOW_MEMORY_GROWTH=1
+		-s ALLOW_MEMORY_GROWTH=1 \
+		-g
 
 clean:
 	cd lib/FFmpeg && \

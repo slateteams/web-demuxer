@@ -5,6 +5,7 @@
 #include <emscripten.h>
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
+#include <fstream>
 
 using namespace emscripten;
 
@@ -226,6 +227,133 @@ void gen_web_stream(WebAVStream &web_stream, AVStream *stream, AVFormatContext *
     }
 }
 
+
+
+// makesa a new file but copies only the selected stream
+std::string extract_stream(std::string filename, int type, int wanted_stream_nb) {
+
+    AVFormatContext *i_fmt_ctx = NULL;
+    AVFormatContext *o_fmt_ctx = NULL;
+    int ret;
+    int stream_index;
+    uint8_t* output_buffer = NULL;
+    size_t output_buffer_size = 0;
+    std::string out_path = "/tmp/extracted";
+
+    if ((ret = avformat_open_input(&i_fmt_ctx, filename.c_str(), NULL, NULL)) < 0)
+    {
+        av_log(NULL, AV_LOG_ERROR, "Cannot open input file\n");
+        avformat_close_input(&i_fmt_ctx);
+        throw std::runtime_error("Cannot open input file");
+    }
+    printf("avformat_open_input done\n");
+    printf("type: %d\n", type);
+    // if (ret = avformat_find_stream_info(i_fmt_ctx, NULL) < 0) {
+    //     av_log(NULL, AV_LOG_ERROR, "Cannot find stream information\n");
+    //     avformat_close_input(&i_fmt_ctx);
+    //     throw std::runtime_error("Cannot find stream information");
+    // }
+    printf("nb_streams: %d\n", i_fmt_ctx->nb_streams);
+    if ((stream_index = av_find_best_stream(i_fmt_ctx, (AVMediaType)type, wanted_stream_nb, -1, NULL, 0)) < 0)
+    {
+        av_log(NULL, AV_LOG_ERROR, "Cannot find stream information\n");
+        avformat_close_input(&i_fmt_ctx);
+        throw std::runtime_error("Cannot find stream information");
+    }
+    printf("av_find_best_stream done\n");
+
+    av_dump_format(i_fmt_ctx, 0, filename.c_str(), 0);
+
+    const AVOutputFormat *output_format = av_guess_format(NULL, filename.c_str(), NULL);
+
+    printf("output_format: %s\n", output_format->name);
+
+    // create output context
+    if ((ret = avformat_alloc_output_context2(&o_fmt_ctx, output_format, NULL, out_path.c_str())) < 0)
+    {
+        av_log(NULL, AV_LOG_ERROR, "Cannot allocate output context\n");
+        avformat_close_input(&i_fmt_ctx);
+        throw std::runtime_error("Cannot allocate output context");
+    }
+
+    printf("avformat_alloc_output_context2 done\n");
+
+    // copy stream
+    AVStream *in_stream = i_fmt_ctx->streams[stream_index];
+    const AVCodec *codec = avcodec_find_encoder(in_stream->codecpar->codec_id);
+    AVStream *out_stream = avformat_new_stream(o_fmt_ctx, codec);
+    if (!out_stream)
+    {
+        av_log(NULL, AV_LOG_ERROR, "Cannot allocate output stream\n");
+        avformat_close_input(&i_fmt_ctx);
+        avformat_free_context(o_fmt_ctx);
+        throw std::runtime_error("Cannot allocate output stream");
+    }
+
+    printf("avformat_new_stream done\n");
+
+    ret = avcodec_parameters_copy(out_stream->codecpar, in_stream->codecpar);
+    out_stream->codecpar->codec_tag = 0;
+    if (ret < 0)
+    {
+        av_log(NULL, AV_LOG_ERROR, "Cannot copy stream parameters\n");
+        avformat_close_input(&i_fmt_ctx);
+        avformat_free_context(o_fmt_ctx);
+        throw std::runtime_error("Cannot copy stream parameters");
+    }
+
+    printf("avcodec_parameters_copy done\n %d %s \n", o_fmt_ctx->flags, out_path.c_str());
+
+    if (!(o_fmt_ctx->oformat->flags & AVFMT_NOFILE)) {
+        printf("in_avio_open \n %d \n", o_fmt_ctx->pb->seekable);
+        ret = avio_open(&o_fmt_ctx->pb, out_path.c_str(), AVIO_FLAG_WRITE);
+        printf("in_avio_open done\n %d \n", ret);
+        if (ret < 0) {
+            fprintf(stderr, "Could not open output file '%s'", out_path.c_str());
+            throw std::runtime_error("Could not open output file");
+        }
+    }
+    printf("avio_open done\n");
+
+    if ((ret = avformat_write_header(o_fmt_ctx, NULL)) < 0)
+    {
+        av_log(NULL, AV_LOG_ERROR, "Cannot write header\n");
+        avformat_close_input(&i_fmt_ctx);
+        avformat_free_context(o_fmt_ctx);
+        throw std::runtime_error("Cannot write header");
+    }
+
+    printf("avformat_write_header done\n");
+
+    // copy packets
+    AVPacket packet;
+    av_init_packet(&packet);
+
+    while (av_read_frame(i_fmt_ctx, &packet) >= 0)
+    {
+        if (packet.stream_index == stream_index)
+        {
+            packet.stream_index = 0;
+            ret = av_interleaved_write_frame(o_fmt_ctx, &packet);
+            printf("av_interleaved_write_frame done\n %d \n", ret);
+            if (ret < 0)
+            {
+                av_log(NULL, AV_LOG_ERROR, "Error while writing output packet\n");
+                break;
+            }
+        }
+        av_packet_unref(&packet);
+    }
+
+    av_write_trailer(o_fmt_ctx);
+
+    avformat_close_input(&i_fmt_ctx);
+    avformat_free_context(o_fmt_ctx);
+
+    return out_path;
+
+}
+
 WebAVStream get_av_stream(std::string filename, int type, int wanted_stream_nb)
 {
     AVFormatContext *fmt_ctx = NULL;
@@ -255,6 +383,7 @@ WebAVStream get_av_stream(std::string filename, int type, int wanted_stream_nb)
     }
 
     AVStream *stream = fmt_ctx->streams[stream_index];
+    
     WebAVStream web_stream;
 
     gen_web_stream(web_stream, stream, fmt_ctx);
@@ -312,6 +441,7 @@ WebMediaInfo get_media_info(std::string filename) {
         avformat_close_input(&fmt_ctx);
         throw std::runtime_error("Cannot open input file");
     }
+    printf("avformat_open_input done\n");
 
     if ((ret = avformat_find_stream_info(fmt_ctx, NULL)) < 0)
     {
@@ -666,6 +796,7 @@ EMSCRIPTEN_BINDINGS(web_demuxer)
     function("get_media_info", &get_media_info, return_value_policy::take_ownership());
     function("get_av_packet", &get_av_packet, return_value_policy::take_ownership());
     function("get_av_packets", &get_av_packets, return_value_policy::take_ownership());
+    function("extract_stream", &extract_stream, return_value_policy::take_ownership());
     function("read_av_packet", &read_av_packet);
     function("set_av_log_level", &set_av_log_level);
 

@@ -1,4 +1,4 @@
-import { FFMpegWorkerMessageType, GetAVPacketMessageData, GetAVPacketsMessageData, GetAVStreamMessageData, GetAVStreamsMessageData, GetMediaInfoMessageData, LoadWASMMessageData, ReadAVPacketMessageData, SetAVLogLevelMessageData, WebAVPacket, WebAVStream } from "./types";
+import { ExtractStreamMessageData, FFMpegWorkerMessageType, GetAVPacketMessageData, GetAVPacketsMessageData, GetAVStreamMessageData, GetAVStreamsMessageData, GetMediaInfoMessageData, LoadWASMMessageData, ReadAVPacketMessageData, SetAVLogLevelMessageData, WebAVPacket, WebAVStream } from "./types";
 
 let Module: any; // TODO: rm any
 
@@ -13,6 +13,8 @@ self.addEventListener("message", async function (e) {
     switch (type) {
       case "LoadWASM":
         return await handleLoadWASM(data);
+      case "ExtractStream":
+        return await handleExtractStream(data, msgId);
       case "GetAVStream":
         return handleGetAVStream(data, msgId);
       case "GetAVStreams":
@@ -43,6 +45,17 @@ async function handleLoadWASM(data: LoadWASMMessageData) {
   const { wasmLoaderPath } = data || {};
   const ModuleLoader = await import(/* @vite-ignore */wasmLoaderPath);
   Module = await ModuleLoader.default();
+}
+
+async function handleExtractStream(data: ExtractStreamMessageData, msgId: number) {
+  const { file, streamIndex, type } = data;
+  const result = await Module.extractStream(file, type,streamIndex);
+
+  self.postMessage({
+    type: FFMpegWorkerMessageType.ExtractStream,
+    msgId,
+    result,
+  }, [result.buffer]);
 }
 
 function handleGetAVStream(data: GetAVStreamMessageData, msgId: number) {
