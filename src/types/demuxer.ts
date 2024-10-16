@@ -42,6 +42,8 @@ export interface WebAVPacket {
   duration: number;
   size: number;
   data: Uint8Array;
+  pos: number;
+  dts: number;
 }
 
 export interface WebMediaInfo {

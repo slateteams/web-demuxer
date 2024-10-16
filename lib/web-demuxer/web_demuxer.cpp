@@ -71,6 +71,8 @@ typedef struct WebAVPacket
     double timestamp;
     double duration;
     int size;
+    int dts;
+    int pos;
     std::vector<uint8_t> data;
     val get_data() const{
         return val(typed_memory_view(data.size(), data.data()));
@@ -131,7 +133,9 @@ void gen_web_packet(WebAVPacket &web_packet, AVPacket *packet, AVStream *stream)
     web_packet.keyframe = packet->flags & AV_PKT_FLAG_KEY;
     web_packet.timestamp = packet_timestamp > 0 ? packet_timestamp : 0;
     web_packet.duration = packet->duration * av_q2d(stream->time_base);
+    web_packet.dts = packet->dts;
     web_packet.size = packet->size;
+    web_packet.pos = packet->pos;
     if (packet->size > 0)
     {
         web_packet.data = std::vector<uint8_t>(packet->data, packet->data + packet->size);
@@ -668,6 +672,8 @@ EMSCRIPTEN_BINDINGS(web_demuxer)
         .property("timestamp", &WebAVPacket::timestamp)
         .property("duration", &WebAVPacket::duration)
         .property("size", &WebAVPacket::size)
+        .property("dts", &WebAVPacket::dts)
+        .property("pos", &WebAVPacket::pos)
         .property("data", &WebAVPacket::get_data); // export data as typed_memory_view
 
     value_object<WebAVPacketList>("WebAVPacketList")
