@@ -267,6 +267,7 @@ export class WebDemuxer {
           pullCounter++;
         },
         cancel: () => {
+          console.log("web-demuxer.ts: send StopReadAVPacket");
           this.post(FFMpegWorkerMessageType.StopReadAVPacket, undefined, msgId);
         },
       },
