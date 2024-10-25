@@ -7,12 +7,13 @@ FFMPEG_CONFIGURE_ARGS = \
 	--disable-asm \
 	--enable-avcodec \
 	--enable-avformat \
-	--enable-protocol=file
+	--enable-protocol=file 
 
 FFMPEG_DEV_CONFIGURE_ARGS = \
-	--enable-debug=3  \
-	--disable-stripping
-
+	--enable-debug=3 \
+	--disable-stripping \
+	--enable-static
+	
 MINI_DEMUX_ARGS = \
 	--enable-demuxer=mov,mp4,m4a,3gp,3g2,matroska,webm,m4v
 
@@ -29,7 +30,6 @@ WEB_DEMUXER_ARGS = \
 		-L./lib/FFmpeg/libavcodec -lavcodec \
 		--post-js ./lib/web-demuxer/post.js \
 		-lworkerfs.js \
-		-O3 \
 		-s EXPORT_ES6=1 \
 		-s INVOKE_RUN=0 \
 		-s ENVIRONMENT=worker \
@@ -39,7 +39,11 @@ WEB_DEMUXER_ARGS = \
 
 WEB_DEMUXER_DEV_ARGS = \
 	-O0 \
-	-g
+	-g \
+	--minify 0 \
+	--profiling \
+	-sWASM_BIGINT \
+	--closure-args=--debug
 
 
 clean:
@@ -60,7 +64,7 @@ ffmpeg-lib:
 ffmpeg-lib-dev:
 	cd lib/FFmpeg && \
 	emconfigure ./configure $(FFMPEG_CONFIGURE_ARGS) $(DEMUX_ARGS) $(FFMPEG_DEV_CONFIGURE_ARGS) && \
-	emmake make
+	emmake make -j$(getconf _NPROCESSORS_ONLN)
 
 web-demuxer: 
 	$(WEB_DEMUXER_ARGS) -o ./src/lib/ffmpeg.js
