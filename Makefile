@@ -64,7 +64,7 @@ ffmpeg-lib:
 ffmpeg-lib-dev:
 	cd lib/FFmpeg && \
 	emconfigure ./configure $(FFMPEG_CONFIGURE_ARGS) $(DEMUX_ARGS) $(FFMPEG_DEV_CONFIGURE_ARGS) && \
-	emmake make -j$(getconf _NPROCESSORS_ONLN)
+	emmake make -j8
 
 web-demuxer: 
 	$(WEB_DEMUXER_ARGS) -o ./src/lib/ffmpeg.js
