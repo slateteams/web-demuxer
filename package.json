@@ -35,6 +35,7 @@
     "make:web-demuxer-dev": "docker exec -it web-demuxer make web-demuxer-dev",
     "make:web-demuxer:all": "npm run make:web-demuxer && npm run make:web-demuxer-mini",
     "build": "tsc && vite build",
+    "build:dev": "tsc && vite build --mode development",
     "build:wasm:mini": "npm run make:ffmpeg-lib-mini && npm run make:web-demuxer-mini",
     "build:wasm": "npm run make:ffmpeg-lib && npm run make:web-demuxer",
     "build:wasm:dev": "npm run make:ffmpeg-lib-dev && npm run make:web-demuxer-dev",

@@ -4,13 +4,17 @@ import dts from "vite-plugin-dts";
 import babel from "@rollup/plugin-babel";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 
-export default defineConfig(() => ({
+export default defineConfig(({ mode }) => ({
   build: {
     lib: {
       entry: resolve(__dirname, "src/index.ts"),
       name: "web-demuxer",
       fileName: "web-demuxer",
     },
+    // Add sourcemap for development mode
+    sourcemap: mode === 'development',
+    // Minify only in production
+    minify: mode === 'production',
     rollupOptions: {
       plugins: [
         babel({
@@ -19,6 +23,7 @@ export default defineConfig(() => ({
               "@babel/preset-env",
               {
                 targets: "> 0.25%, not dead",
+                debug: mode === 'development',
               },
             ],
           ],
