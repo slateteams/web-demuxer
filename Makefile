@@ -39,7 +39,8 @@ WEB_DEMUXER_ARGS = \
 
 WEB_DEMUXER_DEV_ARGS = \
 	-O0 \
-	-g
+	-g \
+	-fsanitize=address
 
 
 clean:

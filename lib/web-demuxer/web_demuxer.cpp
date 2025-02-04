@@ -18,6 +18,7 @@ extern "C"
 #include <libavcodec/codec_id.h>
 #include "video_codec_string.h"
 #include "audio_codec_string.h"
+#include <sanitizer/lsan_interface.h>
 };
 
 typedef struct Tag
@@ -692,4 +693,5 @@ EMSCRIPTEN_BINDINGS(web_demuxer)
     register_vector<Tag>("vector<Tag>");
     register_vector<WebAVStream>("vector<WebAVStream>");
     register_vector<WebAVPacket>("vector<WebAVPacket>");
+    function("__lsan_do_recoverable_leak_check", &__lsan_do_recoverable_leak_check);
 }
