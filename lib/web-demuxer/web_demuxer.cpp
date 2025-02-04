@@ -50,7 +50,8 @@ typedef struct WebAVStream
     std::string bit_rate;
     int extradata_size;
     std::vector<uint8_t> extradata;
-    val get_extradata() const{
+    val get_extradata() const
+    {
         return val(typed_memory_view(extradata.size(), extradata.data()));
     }
     /** Other Info */
@@ -72,7 +73,8 @@ typedef struct WebAVPacket
     double duration;
     int size;
     std::vector<uint8_t> data;
-    val get_data() const{
+    val get_data() const
+    {
         return val(typed_memory_view(data.size(), data.data()));
     }
 } WebAVPacket;
@@ -101,15 +103,18 @@ typedef struct WebMediaInfo
     std::vector<WebAVStream> streams;
 } WebMediaInfo;
 
-double get_rotation(AVStream *stream) {
-   for (int i = 0; i < stream->codecpar->nb_coded_side_data; i++) {
+double get_rotation(AVStream *stream)
+{
+    for (int i = 0; i < stream->codecpar->nb_coded_side_data; i++)
+    {
         AVPacketSideData *sd = &stream->codecpar->coded_side_data[i];
 
-        if (sd->type == AV_PKT_DATA_DISPLAYMATRIX && sd->size >= 9*4) {
+        if (sd->type == AV_PKT_DATA_DISPLAYMATRIX && sd->size >= 9 * 4)
+        {
             double rotation = av_display_rotation_get((int32_t *)sd->data);
             if (std::isnan(rotation))
                 rotation = 0;
-            
+
             return rotation;
         }
     }
@@ -166,6 +171,7 @@ void gen_web_stream(WebAVStream &web_stream, AVStream *stream, AVFormatContext *
     else if (par->codec_type == AVMEDIA_TYPE_AUDIO)
     {
         set_audio_codec_string(codec_string, sizeof(codec_string), par);
+        web_stream.sample_fmt = (par->format != AV_SAMPLE_FMT_NONE) ? av_get_sample_fmt_name((AVSampleFormat)par->format) : "";
     }
     else
     {
@@ -173,14 +179,13 @@ void gen_web_stream(WebAVStream &web_stream, AVStream *stream, AVFormatContext *
     }
 
     web_stream.codec_string = codec_string;
-    web_stream.profile = avcodec_profile_name(par->codec_id, par->profile);
-    web_stream.pix_fmt = av_get_pix_fmt_name((AVPixelFormat)par->format);
+    web_stream.profile = (par->profile != FF_PROFILE_UNKNOWN && par->codec_id != AV_CODEC_ID_NONE) ? avcodec_profile_name(par->codec_id, par->profile) : "";
+    web_stream.pix_fmt = (par->format != AV_PIX_FMT_NONE) ? av_get_pix_fmt_name((AVPixelFormat)par->format) : "";
     web_stream.level = par->level;
     web_stream.width = par->width;
     web_stream.height = par->height;
     web_stream.channels = par->ch_layout.nb_channels;
     web_stream.sample_rate = par->sample_rate;
-    web_stream.sample_fmt = av_get_sample_fmt_name((AVSampleFormat)par->format);
     web_stream.bit_rate = std::to_string(par->bit_rate);
     web_stream.extradata_size = par->extradata_size;
     if (par->extradata_size > 0)
@@ -310,7 +315,8 @@ WebAVStreamList get_av_streams(std::string filename)
     return stream_list;
 }
 
-WebMediaInfo get_media_info(std::string filename) {
+WebMediaInfo get_media_info(std::string filename)
+{
     AVFormatContext *fmt_ctx = NULL;
     int ret;
 
@@ -604,7 +610,8 @@ int read_av_packet(std::string filename, double start, double end, int type, int
     return 1;
 }
 
-void set_av_log_level(int level) {
+void set_av_log_level(int level)
+{
     av_log_set_level(level);
 }
 
@@ -613,8 +620,8 @@ EMSCRIPTEN_BINDINGS(web_demuxer)
     value_object<Tag>("Tag")
         .field("key", &Tag::key)
         .field("value", &Tag::value);
-    
-     class_<WebAVStream>("WebAVStream")
+
+    class_<WebAVStream>("WebAVStream")
         .constructor<>()
         .property("index", &WebAVStream::index)
         .property("id", &WebAVStream::id)
@@ -646,7 +653,6 @@ EMSCRIPTEN_BINDINGS(web_demuxer)
         .property("color_transfer", &WebAVStream::color_transfer)
         .property("color_space", &WebAVStream::color_space)
         .property("color_range", &WebAVStream::color_range);
-
 
     value_object<WebAVStreamList>("WebAVStreamList")
         .field("size", &WebAVStreamList::size)
